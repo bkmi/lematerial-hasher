@@ -1,0 +1,19 @@
+[project]
+name = "material-hasher"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [{ name = "vict0rsch", email = "victor.schmidt@entalpic.ai" }]
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "ipython>=8.29.0",
+    "pre-commit>=4.0.1",
+    "ruff>=0.8.0",
+]
