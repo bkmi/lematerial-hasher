@@ -1,7 +1,13 @@
 from time import time
 from typing import Callable, Iterable, Optional
 
-from material_hasher.benchmark.test_cases import get_test_cases, get_test_data
+from material_hasher.benchmark.test_cases import get_test_cases, get_tests
+
+def load_structures():
+
+    structures = []
+
+    return structures
 
 
 def benchmark_hasher(
@@ -9,7 +15,8 @@ def benchmark_hasher(
     test_cases: Optional[Iterable[str]] = None,
     ignore_test_cases: Optional[Iterable[str]] = None,
 ) -> float:
-    """Measure the performance of a hasher function based on test cases listed in the :module:`material_hasher.benchmark.test_cases` module.
+    """Measure the performance of a hasher function based on test cases listed
+      in the :module:`material_hasher.benchmark.test_cases` module.
 
     Parameters
     ----------
@@ -43,7 +50,7 @@ def benchmark_hasher(
     total_time = 0.0
     for test_case in all_test_cases:
         start_time = time()
-        test_data = get_test_data(test_case)
+        test_data = get_tests(test_case)
         hasher(test_data)
         end_time = time()
         times[test_case] = end_time - start_time
