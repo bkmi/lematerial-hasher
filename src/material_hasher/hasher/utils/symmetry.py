@@ -1,6 +1,5 @@
 from shutil import which
 
-from aflow_xtal_finder import XtalFinder
 from monty.tempfile import ScratchDir
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 from pymatgen.core import Structure
@@ -11,12 +10,12 @@ class SPGLibSymmetry:
     Symmetry space group number using SPGLib via Pymatgen
     """
 
-    def __init__(self, symprec: float = None):
+    def __init__(self, symprec: float = 0.01):
         """Class to set settings for Pymatgen's symmetry detection
 
         Args:
             symprec (float, optional): Symmetry precision tollerance.
-              Defaults to 0.1.
+              Defaults to 0.01.
         """
         self.symprec = symprec
 
@@ -47,6 +46,7 @@ class AFLOWSymmetry:
         Raises:
             RuntimeError: If AFLOW is not found
         """
+        from aflow_xtal_finder import XtalFinder
 
         self.aflow_executable = aflow_executable or which("aflow")
 
