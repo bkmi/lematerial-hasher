@@ -1,4 +1,4 @@
-class LeHasher:
+class SimpleHasher:
     """A simple hasher that always returns the same hash.
 
     This is just a demo.
@@ -8,4 +8,4 @@ class LeHasher:
         pass
 
     def hash(self) -> str:
-        return "lehash"
+        return "simple_hash"
