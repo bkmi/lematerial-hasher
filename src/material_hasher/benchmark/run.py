@@ -3,8 +3,8 @@ from typing import Callable, Iterable, Optional
 
 from material_hasher.benchmark.test_cases import get_test_cases, get_tests
 
-def load_structures():
 
+def load_structures():
     structures = []
 
     return structures
@@ -50,6 +50,7 @@ def benchmark_hasher(
         ...
 
     """
+
 
 from time import time
 from typing import Callable, Iterable, Optional

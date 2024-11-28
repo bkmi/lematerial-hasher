@@ -4,6 +4,7 @@ from typing import Union
 import numpy as np
 from pymatgen.core import Structure, SymmOp
 
+
 def get_new_structure_with_gaussian_noise(
     structure: Structure, sigma: float = 0.001
 ) -> Structure:
@@ -24,6 +25,7 @@ def get_new_structure_with_gaussian_noise(
         coords_are_cartesian=True,
     )
 
+
 def get_new_structure_with_isometric_strain(
     structure: Structure, pct: float
 ) -> Structure:
@@ -39,6 +41,7 @@ def get_new_structure_with_isometric_strain(
     s = structure.copy()
     return s.scale_lattice(structure.volume * pct)
 
+
 def get_new_structure_with_strain(structure: Structure, sigma: float) -> Structure:
     """_summary_
 
@@ -52,9 +55,8 @@ def get_new_structure_with_strain(structure: Structure, sigma: float) -> Structu
     s = structure.copy()
     return s.apply_strain(np.random.normal(np.zeros(3), sigma))
 
-def get_new_structure_with_translation(
-    structure: Structure, sigma: float
-) -> Structure:
+
+def get_new_structure_with_translation(structure: Structure, sigma: float) -> Structure:
     """_summary_
 
     Args:
@@ -68,6 +70,7 @@ def get_new_structure_with_translation(
     return s.translate_sites(
         [n for n in range(len(structure))], np.random.normal(np.zeros(3), sigma)
     )
+
 
 def get_new_structure_with_symm_ops(
     structure: Structure, symm_ops: Union[SymmOp]
@@ -84,6 +87,8 @@ def get_new_structure_with_symm_ops(
     s = structure.copy()
     symm_op = random.choices(symm_ops)
     return s.apply_operation(symm_op)
+
+
 from typing import Optional
 
 ALL_TEST_CASES = ["gaussian_noise"]

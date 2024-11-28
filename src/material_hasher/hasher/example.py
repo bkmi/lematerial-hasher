@@ -1,5 +1,6 @@
 from pymatgen.core import Structure
 
+
 class SimpleCompositionHasher:
     """A simple hasher that always returns the composition hash.
 

@@ -6,12 +6,13 @@ from pymatgen.core import Structure
 
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
 
+
 class SPGLibSymmetry:
     """
     Symmetry space group number using SPGLib via Pymatgen
     """
 
-    def __init__(self, symprec: float =None):
+    def __init__(self, symprec: float = None):
         """Class to set settings for Pymatgen's symmetry detection
 
         Args:
