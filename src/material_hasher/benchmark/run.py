@@ -1,11 +1,14 @@
 from time import time
 from typing import Callable, Iterable, Optional
 
-from pymatgen.core import Structure
+from time import time
+from typing import Callable, Iterable, Optional
 
-from material_hasher.benchmark.test_cases import get_test_data, make_test_cases
+from material_hasher.benchmark.test_cases import make_test_cases
 from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
 from material_hasher.hasher.example import SimpleCompositionHasher
+
+from pymatgen.core import Structure
 
 HASHERS = {
     "Entalpic": EntalpicMaterialsHasher,
@@ -53,12 +56,12 @@ def benchmark_hasher(
 
     times = {"total": 0.0}
     for test_case in test_cases:
+        start_time = time()
         for structure in test_data:
-            start_time = time()
             hasher_func(structure)
-            end_time = time()
-            times[test_case] = end_time - start_time
-            times["total"] += times[test_case]
+        end_time = time()
+        times[test_case] = end_time - start_time
+        times["total"] += times[test_case]
 
     return times
 
