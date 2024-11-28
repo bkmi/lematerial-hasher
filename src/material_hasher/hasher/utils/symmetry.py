@@ -2,9 +2,8 @@ from shutil import which
 
 from aflow_xtal_finder import XtalFinder
 from monty.tempfile import ScratchDir
-from pymatgen.core import Structure
-
 from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
+from pymatgen.core import Structure
 
 
 class SPGLibSymmetry:

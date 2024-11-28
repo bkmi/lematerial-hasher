@@ -1,8 +1,8 @@
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
 
-from material_hasher.hasher.utils.symmetry import AFLOWSymmetry, SPGLibSymmetry
 from material_hasher.hasher.utils.graph import get_weisfeiler_lehman_hash
 from material_hasher.hasher.utils.graph_structure import get_structure_graph
+from material_hasher.hasher.utils.symmetry import AFLOWSymmetry, SPGLibSymmetry
 
 
 class EntalpicMaterialsHasher:
