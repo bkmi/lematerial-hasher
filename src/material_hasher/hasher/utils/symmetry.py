@@ -4,10 +4,38 @@ from aflow_xtal_finder import XtalFinder
 from monty.tempfile import ScratchDir
 from pymatgen.core import Structure
 
+from pymatgen.analysis.structure_analyzer import SpacegroupAnalyzer
+
+class SPGLibSymmetry:
+    """
+    Symmetry space group number using SPGLib via Pymatgen
+    """
+
+    def __init__(self, symprec: float =None):
+        """Class to set settings for Pymatgen's symmetry detection
+
+        Args:
+            symprec (float, optional): Symmetry precision tollerance.
+              Defaults to 0.1.
+        """
+        self.symprec = symprec
+
+    def get_symmetry_label(self, structure: Structure) -> int:
+        """Get symmetry space group number from structure
+
+        Args:
+            structure (Structure): input structure
+
+        Returns:
+            int: space group number
+        """
+        sga = SpacegroupAnalyzer(structure, self.symprec)
+        return sga.get_symmetry_dataset().number
+
 
 class AFLOWSymmetry:
     """
-    AFLOW label adapter class
+    AFLOW prototype label using AFLOW libary
     """
 
     def __init__(self, aflow_executable: str = None):
@@ -30,7 +58,7 @@ class AFLOWSymmetry:
                 f"the binary to be specified via {self.aflow_executable=}.\n"
             )
 
-    def aflow_label(self, structure: Structure, tolerance: float = 0.1) -> str:
+    def get_symmetry_label(self, structure: Structure, tolerance: float = 0.1) -> str:
         """
         Returns AFLOW label for a given structure
         Args:
