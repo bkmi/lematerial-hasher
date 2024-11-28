@@ -1,8 +1,11 @@
 import random
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 from pymatgen.core import Structure, SymmOp
+
+ALL_TEST_CASES = ["gaussian_noise"]
+"""List of all test cases available in the benchmark as ``list[str]``."""
 
 
 def get_new_structure_with_gaussian_noise(
@@ -27,7 +30,7 @@ def get_new_structure_with_gaussian_noise(
 
 
 def get_new_structure_with_isometric_strain(
-    structure: Structure, pct: float
+    structure: Structure, pct: float = 0.01
 ) -> Structure:
     """_summary_
 
@@ -42,7 +45,9 @@ def get_new_structure_with_isometric_strain(
     return s.scale_lattice(structure.volume * pct)
 
 
-def get_new_structure_with_strain(structure: Structure, sigma: float) -> Structure:
+def get_new_structure_with_strain(
+    structure: Structure, sigma: float = 0.01
+) -> Structure:
     """_summary_
 
     Args:
@@ -56,7 +61,9 @@ def get_new_structure_with_strain(structure: Structure, sigma: float) -> Structu
     return s.apply_strain(np.random.normal(np.zeros(3), sigma))
 
 
-def get_new_structure_with_translation(structure: Structure, sigma: float) -> Structure:
+def get_new_structure_with_translation(
+    structure: Structure, sigma: float = 0.1
+) -> Structure:
     """_summary_
 
     Args:
@@ -73,7 +80,8 @@ def get_new_structure_with_translation(structure: Structure, sigma: float) -> St
 
 
 def get_new_structure_with_symm_ops(
-    structure: Structure, symm_ops: Union[SymmOp]
+    structure: Structure,
+    symm_ops: Union[SymmOp] = SymmOp.from_rotation_and_translation(),
 ) -> Structure:
     """_summary_
 
@@ -87,12 +95,6 @@ def get_new_structure_with_symm_ops(
     s = structure.copy()
     symm_op = random.choices(symm_ops)
     return s.apply_operation(symm_op)
-
-
-from typing import Optional
-
-ALL_TEST_CASES = ["gaussian_noise"]
-"""List of all test cases available in the benchmark as ``list[str]``."""
 
 
 def make_test_cases(
@@ -149,7 +151,7 @@ def make_test_cases(
     return all_test_cases
 
 
-def get_test_data(test_case: str) -> dict:
+def get_test_case(test_case: str) -> dict:
     """Utility function to get test data for a given test case.
 
     Parameters
@@ -163,6 +165,6 @@ def get_test_data(test_case: str) -> dict:
         Dictionary of test data.
     """
     if test_case == "gaussian_noise":
-        return {"data": "gaussian noise data"}
+        return get_new_structure_with_gaussian_noise
     else:
         raise ValueError(f"Unknown test case: {test_case}")

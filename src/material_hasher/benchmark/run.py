@@ -1,18 +1,16 @@
 from time import time
 from typing import Callable, Iterable, Optional
 
-from time import time
-from typing import Callable, Iterable, Optional
+from pymatgen.core import Structure
 
 from material_hasher.benchmark.test_cases import get_test_data, make_test_cases
 from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
 from material_hasher.hasher.example import SimpleCompositionHasher
 
-from pymatgen.core import Structure
-
-HASHERS = {"Entalpic":
-           EntalpicMaterialsHasher,
-           "SimpleComposition":SimpleCompositionHasher}
+HASHERS = {
+    "Entalpic": EntalpicMaterialsHasher,
+    "SimpleComposition": SimpleCompositionHasher,
+}
 
 
 def load_structures():
