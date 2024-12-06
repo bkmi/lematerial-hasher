@@ -6,6 +6,8 @@ from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
 
 
 class TestBenchmark:
+    """Unit test to check if benchmark returns results without any errors"""
+
     def test_run(self):
         structure_data = [
             Structure([[4, 0, 0], [0, 4, 0], [0, 0, 4]], ["Si"], [[0, 0, 0]])
