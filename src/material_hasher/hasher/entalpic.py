@@ -26,7 +26,7 @@ class EntalpicMaterialsHasher:
 
         Args:
             graphing_algorithm (str, optional): Graph hashing algorithm.
-                Currently only Weisfeller-Lehman (WL) is implemented.
+                Currently only Weisfeiler-Lehman (WL) is implemented.
                 Defaults to "WL".
             bonding_algorithm (NearNeighbors, optional): Pymatgen
                 NearNeighbors class to compute bonds and create
