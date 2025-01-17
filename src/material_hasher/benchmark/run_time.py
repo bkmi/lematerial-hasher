@@ -1,17 +1,18 @@
 import datetime
 import os
 import time
+import tqdm
 from collections import defaultdict
 from pathlib import Path
 from typing import List, Tuple, Optional
 
 import numpy as np
 import pandas as pd
-import tqdm
 import yaml
 from pymatgen.core import Structure
 
 from material_hasher.benchmark.run_transformations import get_hugging_face_dataset
+from material_hasher.benchmark.disordered import get_group_structure_results
 from material_hasher.benchmark.utils import get_structure_from_hf_row
 from material_hasher.hasher import HASHERS
 from material_hasher.similarity import SIMILARITY_MATCHERS
@@ -46,7 +47,8 @@ def benchmark_time(
     structure_checker: StructureEquivalenceChecker,
     seeds: List[int] = [0, 1, 2, 3, 4],
 ) -> Tuple[pd.DataFrame, float]:
-    """Benchmark the disordered structures using the given hasher or similarity matcher.
+    """Benchmark the time taken to compute pairwise equivalence
+    of structures using the given hasher or similarity matcher.
 
     Parameters
     ----------
@@ -61,47 +63,28 @@ def benchmark_time(
         Total time taken for the benchmark
     """
     print("Downloading benchmark data...")
-    structures = get_benchmark_data(1000)
+    start_script_time = time.time()
+    all_structures = [get_benchmark_data(1000, seed) for seed in seeds]
 
-    dissimilar_structures_unique_structures = [
-        get_dissimilar_structures(structures, seed) for seed in seeds
-    ]
-    dissimilar_structures = [
-        dissimilar_structures
-        for dissimilar_structures, _ in dissimilar_structures_unique_structures
-    ]
-    unique_structures = [
-        unique_structures
-        for _, unique_structures in dissimilar_structures_unique_structures
-    ]
-    results = defaultdict(dict)
+    lengths_to_test = np.linspace(2, 100, 11).astype(int)
+    # we will stop here because 100**2 is already a lot of comparisons!
 
-    start_time = time.time()
-    print("\n\n-- Dissimilar Structures --")
-    dissimilar_metrics = get_classification_results_dissimilar(
-        structure_checker, dissimilar_structures, unique_structures
-    )
-    results["dissimilar_case"] = dissimilar_metrics
-    print(
-        f"Success rate: {np.mean(dissimilar_metrics['success_rate']) * 100:.2f}%"
-        + r" $\pm$ "
-        + f"{np.std(dissimilar_metrics['success_rate']) * 100:.2f}%"
-    )
+    results = defaultdict(list)
 
-    print("Benchmarking disordered structures...")
-    for group, structures in tqdm.tqdm(structures.items()):
-        metrics = run_group_structures_benchmark(structure_checker, group, structures)
-        results[group] = metrics
-        print(
-            f"Success rate: {(np.mean(metrics['success_rate']) * 100):.2f}%"
-            + r" $\pm$ "
-            + f"{(np.std(metrics['success_rate']) * 100):.2f}%"
-        )
-    total_time = time.time() - start_time
-    results["total_time (s)"] = total_time  # type: ignore
+    for length in tqdm.tqdm(lengths_to_test):
+        print(f"Benchmarking {length} structures...")
+        for seed in seeds:
+            structures_length_seed = all_structures[seed][:length]
+            start_time = time.time()
+            _ = get_group_structure_results(structure_checker, structures_length_seed)
+            total_time = time.time() - start_time
+            results[length].append(total_time)
 
-    df_results = pd.DataFrame(results).T
+    # the dataframe is just a one row dataframe with the list of times for all seeds
+    df_results = pd.DataFrame({length: [results[length]] for length in lengths_to_test})
     print(df_results)
+
+    total_time = time.time() - start_script_time
 
     return df_results, total_time
 
@@ -116,12 +99,12 @@ def main():
 
     .. code-block:: bash
 
-        $ python -m material_hasher.benchmark.run_disordered --help
+        $ python -m material_hasher.benchmark.run_time --help
     """
     from argparse import ArgumentParser
 
     parser = ArgumentParser(
-        description="Benchmark hashers and similarity matchers for disordered structures."
+        description="Benchmark hashers and similarity matchers for time taken to compare structures."
     )
     parser.add_argument(
         "--algorithm",
@@ -162,18 +145,14 @@ def main():
         structure_checker = structure_checker_class(
             **config.get(structure_checker_name, {})
         )
-        df_results, structure_checker_time = benchmark_disordered_structures(
-            structure_checker
-        )
-        df_results.to_csv(
-            output_path / f"{structure_checker_name}_results_disordered.csv"
-        )
+        df_results, structure_checker_time = benchmark_time(structure_checker)
+        df_results.to_csv(output_path / f"{structure_checker_name}_results_time.csv")
         all_results[structure_checker_name] = df_results
         print(f"{structure_checker_name}: {structure_checker_time:.3f} s")
 
     if args.algorithm == "all":
         all_results = pd.concat(all_results, names=["algorithm"])
-        all_results.to_csv(output_path / "all_results_disordered.csv")
+        all_results.to_csv(output_path / "all_results_time.csv")
 
 
 if __name__ == "__main__":
