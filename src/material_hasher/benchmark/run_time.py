@@ -1,18 +1,19 @@
 import datetime
 import os
 import time
-import tqdm
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Tuple, Optional
+from typing import List, Optional, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import tqdm
 import yaml
 from pymatgen.core import Structure
 
-from material_hasher.benchmark.run_transformations import get_hugging_face_dataset
 from material_hasher.benchmark.disordered import get_group_structure_results
+from material_hasher.benchmark.run_transformations import get_hugging_face_dataset
 from material_hasher.benchmark.utils import get_structure_from_hf_row
 from material_hasher.hasher import HASHERS
 from material_hasher.similarity import SIMILARITY_MATCHERS
@@ -43,6 +44,32 @@ def get_benchmark_data(n_structures: int, seed: Optional[int] = 0) -> List[Struc
     return structures
 
 
+def plot_runtimes(file_path, output_path):
+    data = pd.read_csv(file_path, index_col=0)
+
+    sequence_lengths = [int(x) for x in data.columns[1:]]
+
+    plt.figure(figsize=(12, 8))
+
+    for algorithm in data.index:
+        runtimes = []
+        for col in data.columns[1:]:
+            # Convert the string of runtimes to a list of floats
+            runtimes.append(np.mean(eval(data.at[algorithm, col])))
+
+        plt.plot(sequence_lengths, runtimes, label=algorithm)
+
+    plt.title("Algorithm Runtimes to compare all Structure pairs", fontsize=16)
+    plt.xlabel("Number of Structures", fontsize=14)
+    plt.ylabel("Average Runtime (s)", fontsize=14)
+    plt.legend(title="Algorithm", fontsize=12)
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(Path(output_path) / "runtimes.png")
+
+    plt.show()
+
+
 def benchmark_time(
     structure_checker: StructureEquivalenceChecker,
     seeds: List[int] = [0, 1, 2, 3, 4],
@@ -66,8 +93,8 @@ def benchmark_time(
     start_script_time = time.time()
     all_structures = [get_benchmark_data(1000, seed) for seed in seeds]
 
-    lengths_to_test = np.linspace(2, 100, 11).astype(int)
-    # we will stop here because 100**2 is already a lot of comparisons!
+    lengths_to_test = np.linspace(2, 1000, 20).astype(int)
+    # we will stop here because 200**2 is already a lot of comparisons!
 
     results = defaultdict(list)
 
@@ -153,6 +180,8 @@ def main():
     if args.algorithm == "all":
         all_results = pd.concat(all_results, names=["algorithm"])
         all_results.to_csv(output_path / "all_results_time.csv")
+
+    plot_runtimes(output_path / "all_results_time.csv")
 
 
 if __name__ == "__main__":
