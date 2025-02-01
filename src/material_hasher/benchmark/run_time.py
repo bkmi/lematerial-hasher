@@ -47,17 +47,30 @@ def get_benchmark_data(n_structures: int, seed: Optional[int] = 0) -> List[Struc
 def plot_runtimes(file_path, output_path):
     data = pd.read_csv(file_path, index_col=0)
 
+    # Convert the column names (which look like "10", "100", etc.) to integers
     sequence_lengths = [int(x) for x in data.columns[1:]]
 
-    plt.figure(figsize=(12, 8))
+    plt.figure(figsize=(7, 5))
 
     for algorithm in data.index:
-        runtimes = []
+        means = []
+        std_devs = []
         for col in data.columns[1:]:
             # Convert the string of runtimes to a list of floats
-            runtimes.append(np.mean(eval(data.at[algorithm, col])))
+            algorithm_runtimes = eval(data.at[algorithm, col])
+            means.append(np.mean(algorithm_runtimes))
+            std_devs.append(np.std(algorithm_runtimes))
 
-        plt.plot(sequence_lengths, runtimes, label=algorithm)
+        # Plot the mean runtimes with error bars (standard deviation)
+        plt.errorbar(
+            sequence_lengths,
+            means,
+            yerr=std_devs,
+            capsize=5,
+            marker="o",
+            linestyle="-",
+            label=algorithm,
+        )
 
     plt.title("Algorithm Runtimes to compare all Structure pairs", fontsize=16)
     plt.xlabel("Number of Structures", fontsize=14)
@@ -65,7 +78,10 @@ def plot_runtimes(file_path, output_path):
     plt.legend(title="Algorithm", fontsize=12)
     plt.grid(True)
     plt.tight_layout()
-    plt.savefig(Path(output_path) / "runtimes.png")
+
+    # Save the figure
+    output_file = Path(output_path) / "runtimes.pdf"
+    plt.savefig(output_file, dpi=300)
 
     plt.show()
 
