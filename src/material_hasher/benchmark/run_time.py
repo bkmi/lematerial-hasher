@@ -179,9 +179,12 @@ def main():
 
     if args.algorithm == "all":
         all_results = pd.concat(all_results, names=["algorithm"])
-        all_results.to_csv(output_path / "all_results_time.csv")
+        file_path = output_path / "all_results_time.csv"
+        all_results.to_csv(file_path)
+    else:
+        file_path = output_path / f"{args.algorithm}_results_time.csv"
 
-    plot_runtimes(output_path / "all_results_time.csv")
+    plot_runtimes(file_path, output_path)
 
 
 if __name__ == "__main__":
