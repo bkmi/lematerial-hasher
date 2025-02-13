@@ -1,24 +1,26 @@
+# Copyright 2025 Entalpic
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
 from pymatgen.core import Structure
 
+from material_hasher.hasher.base import HasherBase
 from material_hasher.hasher.utils.graph import get_weisfeiler_lehman_hash
 from material_hasher.hasher.utils.graph_structure import get_structure_graph
 from material_hasher.hasher.utils.symmetry import AFLOWSymmetry, SPGLibSymmetry
 
 
-class EntalpicMaterialsHasher:
+class EntalpicMaterialsHasher(HasherBase):
     """Materials fingerprint method proposed by Entalpic.
     Returns hash based on bonding graph structure, composition,
     and symmetry.
     """
-
     def __init__(
         self,
         graphing_algorithm: str = "WL",
         bonding_algorithm: NearNeighbors = EconNN,
-        bonding_kwargs: dict = {},
-        include_composition: bool = False,
+        bonding_kwargs: dict = {"tol": 0.2, "cutoff": 10, "use_fictive_radius": True},
+        include_composition: bool = True,
         symmetry_labeling: str = "SPGLib",
+        shorten_hash: bool = False,
     ):
         """Generate fingerprint for given Pymatgen structure.
 
@@ -44,6 +46,7 @@ class EntalpicMaterialsHasher:
         self.bonding_kwargs = bonding_kwargs
         self.include_composition = include_composition
         self.symmetry_labeling = symmetry_labeling
+        self.shorten_hash = shorten_hash
 
     def get_entalpic_materials_data(self, structure: Structure) -> dict:
         """Gets various hash component for given
@@ -73,26 +76,40 @@ class EntalpicMaterialsHasher:
             raise ValueError(
                 "Graphing algorithm {} not implemented".format(self.graphing_algorithm)
             )
-        if self.symmetry_labeling == "AFLOW":
-            data["symmetry_label"] = AFLOWSymmetry().get_symmetry_label(structure)
-        elif self.symmetry_labeling == "SPGLib":
-            data["symmetry_label"] = SPGLibSymmetry().get_symmetry_label(structure)
-        else:
-            raise ValueError(
-                "Symmetry algorithm {} not implemented".format(self.symmetry_labeling)
-            )
+        if not self.shorten_hash:
+            if self.symmetry_labeling == "AFLOW":
+                data["symmetry_label"] = AFLOWSymmetry().get_symmetry_label(structure)
+            elif self.symmetry_labeling == "SPGLib":
+                data["symmetry_label"] = SPGLibSymmetry().get_symmetry_label(structure)
+            else:
+                raise ValueError(
+                    "Symmetry algorithm {} not implemented".format(
+                        self.symmetry_labeling
+                    )
+                )
         if self.include_composition:
             data["composition"] = structure.composition.formula.replace(" ", "")
         return data
 
     def get_material_hash(self, structure: Structure) -> str:
-        """Get hash for a given Pymatgen Structure
+        """Returns a hash of the structure.
 
-        Args:
-            structure (Structure): Pymatgen Structure to hash
+        Parameters
+        ----------
+        structure : Structure
+            Structure to hash.
 
-        Returns:
-            str: hash
+        Returns
+        -------
+        str
+            Hash of the structure.
         """
         data = self.get_entalpic_materials_data(structure)
         return "_".join([str(v) for k, v in data.items()])
+
+
+class ShortenedEntalpicMaterialsHasher(EntalpicMaterialsHasher):
+    def __init__(
+        self,
+    ):
+        super().__init__(shorten_hash=True)

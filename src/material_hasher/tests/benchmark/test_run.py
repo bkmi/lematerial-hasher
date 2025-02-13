@@ -1,23 +1,33 @@
-from pymatgen.core import Structure
+# Copyright 2025 Entalpic
+from material_hasher.benchmark.run_transformations import (
+    diagram_sensitivity,
+    get_data_from_hugging_face,
+)
+from material_hasher.benchmark.transformations import ALL_TEST_CASES
 
-from material_hasher.benchmark.run import HASHERS, benchmark_hasher
-from material_hasher.benchmark.test_cases import ALL_TEST_CASES
-from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
 
+class TestAllTransformationsBenchmark:
+    """This test class runs all transformation tests for a single structure from LeMat-Bulk with all parameters.
 
-class TestBenchmark:
-    """Unit test to check if benchmark returns results without any errors"""
+    To initiate, use test_transformation_hashes().
+    """
+    def test_transformation_hashes(self):
+        """Runs all transformation test for single structure from LeMat-Bulk.
 
-    def test_run(self):
-        structure_data = [
-            Structure([[4, 0, 0], [0, 4, 0], [0, 0, 4]], ["Si"], [[0, 0, 0]])
-        ]
+        Returns
+        -------
+            Pyplot: outputs one Matplotlib plot per transformation test for all hashers. Next transformation freezes until plot it closed.
+        """
+        hg_structures = [get_data_from_hugging_face("token")[0]]
+        for test_case in ALL_TEST_CASES:
+            diagram_sensitivity(
+                hg_structures, test_case, "Test Dataset", test_case, "./output"
+            )
 
-        times = benchmark_hasher(
-            hasher_func=EntalpicMaterialsHasher,
-            test_cases=ALL_TEST_CASES,
-            ignore_test_cases=None,
-            structure_data=structure_data,
-        )
+    def test_dataset_download(self):
+        """Tests ability to get data from HuggingFace for LeMat-Bulk.
 
-        return times
+        Returns:
+            datasets: LeMat-Bulk datasets object
+        """
+        return get_data_from_hugging_face("token")

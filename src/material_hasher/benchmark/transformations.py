@@ -1,15 +1,31 @@
+# Copyright 2025 Entalpic
+import inspect
 import random
 from typing import Optional, Union
 
 import numpy as np
 from pymatgen.core import Structure, SymmOp
+from pymatgen.symmetry.analyzer import SpacegroupAnalyzer
 
-ALL_TEST_CASES = ["gaussian_noise"]
-"""List of all test cases available in the benchmark as ``list[str]``."""
+ALL_TEST_CASES = [
+    "gaussian_noise",
+    "isometric_strain",
+    "strain",
+    "translation",
+    "symm_ops",
+]
+
+PARAMETERS = {
+    "gaussian_noise": {"sigma": np.logspace(0.0001, 0.5,15, base=0.0000001)},
+    "isometric_strain": {"pct": [1,1.05,1.1,1.2,1.5]},
+    "strain": {"sigma": np.logspace(0.001, 0.5,10, base=0.0000001)},
+    "translation": {"sigma": np.logspace(0.0001, 0.5,15, base=0.0000001)},
+    "symm_ops": {"structure_symmetries": ["all_symmetries_found"]},
+}
 
 
 def get_new_structure_with_gaussian_noise(
-    structure: Structure, sigma: float = 0.001
+    structure: Structure, sigma: float
 ) -> Structure:
     """Returns new structure with gaussian noise on atomic positions
 
@@ -30,10 +46,9 @@ def get_new_structure_with_gaussian_noise(
 
 
 def get_new_structure_with_isometric_strain(
-    structure: Structure, pct: float = 0.01
+    structure: Structure, pct: float
 ) -> Structure:
-    """_summary_
-
+    """
     Args:
         structure (Structure): Input structure to modify
         pct (float): Strain applied to lattice in all direction
@@ -45,11 +60,8 @@ def get_new_structure_with_isometric_strain(
     return s.scale_lattice(structure.volume * pct)
 
 
-def get_new_structure_with_strain(
-    structure: Structure, sigma: float = 0.01
-) -> Structure:
-    """_summary_
-
+def get_new_structure_with_strain(structure: Structure, sigma: float) -> Structure:
+    """
     Args:
         structure (Structure): Input structure to modify
         sigma (float): Percent noise applied to lattice vectors
@@ -61,11 +73,8 @@ def get_new_structure_with_strain(
     return s.apply_strain(np.random.normal(np.zeros(3), sigma))
 
 
-def get_new_structure_with_translation(
-    structure: Structure, sigma: float = 0.1
-) -> Structure:
-    """_summary_
-
+def get_new_structure_with_translation(structure: Structure, sigma: float) -> Structure:
+    """
     Args:
         structure (Structure): Input structure to modify
         sigma (float): Noise to apply to lattice vectors
@@ -81,20 +90,33 @@ def get_new_structure_with_translation(
 
 def get_new_structure_with_symm_ops(
     structure: Structure,
-    symm_ops: Union[SymmOp] = SymmOp.from_rotation_and_translation(),
-) -> Structure:
-    """_summary_
-
-    Args:
-        structure (Structure): Input structure to modify
-        symm_ops (Union[SymmOp]): List of symmetry operation to test on structure
-
-    Returns:
-        Structure: new structure with modification
+    structure_symmetries: str,
+) -> list[Structure]:
     """
-    s = structure.copy()
-    symm_op = random.choices(symm_ops)
-    return s.apply_operation(symm_op)
+    Modify a structure using symmetry operations.
+
+    Parameters
+    ----------
+    structure : Structure
+        Input structure to modify.
+    structure_symmetries : str, optional
+        Determines how symmetry operations are applied. It apply all symmetries by default.
+
+    Returns
+    -------
+    list[Structure]
+        A list of modified structures.
+
+    Raises
+    ------
+    ValueError
+        If an invalid value for `symm_ops` is provided.
+    """
+    # Analyze symmetry operations
+    analyzer = SpacegroupAnalyzer(structure)
+    symmetry_operations = analyzer.get_symmetry_operations()
+
+    return [structure.copy().apply_operation(op) for op in symmetry_operations]
 
 
 def make_test_cases(
@@ -151,8 +173,9 @@ def make_test_cases(
     return all_test_cases
 
 
-def get_test_case(test_case: str) -> dict:
-    """Utility function to get test data for a given test case.
+def get_test_case(test_case: str) -> tuple:
+    """
+    Utility function to get test data for a given test case.
 
     Parameters
     ----------
@@ -161,10 +184,28 @@ def get_test_case(test_case: str) -> dict:
 
     Returns
     -------
-    dict
-        Dictionary of test data.
+    tuple
+        Function and corresponding parameters for the test case.
+
+    Raises
+    ------
+    ValueError
+        If the test case or corresponding function is not found.
     """
-    if test_case == "gaussian_noise":
-        return get_new_structure_with_gaussian_noise
-    else:
-        raise ValueError(f"Unknown test case: {test_case}")
+    # Get the current module
+    module = inspect.getmodule(inspect.currentframe())
+
+    # Create the function name dynamically
+    func_name = f"get_new_structure_with_{test_case}"
+
+    # Check if the function exists in the module
+    if not hasattr(module, func_name):
+        raise ValueError(f"Function {func_name} not found in module {module.__name__}")
+
+    # Check if test_case exists in PARAMETERS
+    if test_case not in PARAMETERS:
+        raise ValueError(f"Test case {test_case} not found in PARAMETERS")
+
+    # Retrieve the function and parameters
+    function = getattr(module, func_name)
+    return function, PARAMETERS[test_case]
