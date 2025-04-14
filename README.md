@@ -53,7 +53,7 @@ We include the following fingerprint methods:
 -   a Structure graph, hashed via Weisfeiler-Lehman with and without symmetry labeling from SPGLib and composition
 
     ```python
-    from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
+    from material_hasher.hasher.bawl import BAWLHasher
     ```
 
 -   SLICES
@@ -100,10 +100,10 @@ To test all the hasher and similarity methods on disordered materials dataset, s
 
 To test all the hasher and similarity methods on varying transformations applied to the structures across materials sampled from LeMat-Bulk:
 
--   typical run (test Entalpic fingerprint on all test cases for a single structure):
+-   typical run (test BAWL fingerprint on all test cases for a single structure):
 
     ```bash
-    $ python -m material_hasher.benchmark.run_transformations --algorithm Entalpic  --n-test-elements 1
+    $ python -m material_hasher.benchmark.run_transformations --algorithm BAWL --n-test-elements 1
     ```
 
 -   get help:
@@ -120,13 +120,13 @@ Here is a sample code to get a hash result:
 import numpy as np
 from pymatgen.core import Structure
 
-from material_hasher.hasher.entalpic import EntalpicMaterialsHasher
+from material_hasher.hasher.bawl import BAWLHasher
 
 # create a structure
 structure = Structure(np.eye(3) * 3, ["Si"], [[0, 0, 0]])
 
 # initialize the hasher
-emh = EntalpicMaterialsHasher()
+emh = BAWLHasher()
 
 # get the hash
 print(emh.get_material_hash(structure))
