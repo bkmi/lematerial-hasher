@@ -5,7 +5,6 @@ from pymatgen.core import Structure
 from networkx import Graph
 from moyopy import MoyoDataset
 from moyopy.interface import MoyoAdapter
-import warnings
 
 
 def get_structure_graph(
@@ -13,6 +12,8 @@ def get_structure_graph(
     bonding_kwargs: dict = {},
     bonding_algorithm: NearNeighbors = EconNN,
     primitive_reduction: bool = False,
+    symprec: float = 0.1,
+    angle_tolerance: float | None = 5,
 ) -> Graph:
     """Method to build networkx graph object based on
     bonding algorithm from Pymatgen Structure
@@ -29,7 +30,11 @@ def get_structure_graph(
     """
     assess_structure = (
         MoyoAdapter.get_structure(
-            MoyoDataset(MoyoAdapter.from_structure(structure)).prim_std_cell
+            MoyoDataset(
+                MoyoAdapter.from_structure(structure),
+                symprec=symprec,
+                angle_tolerance=angle_tolerance,
+            ).prim_std_cell
         )
         if primitive_reduction
         else structure.copy()
