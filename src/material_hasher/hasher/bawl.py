@@ -119,7 +119,10 @@ class BAWLHasher(HasherBase):
                         structure
                     )
                 case ("moyo", _):
-                    data["symmetry_label"] = MoyoSymmetry().get_symmetry_label(
+                    data["symmetry_label"] = MoyoSymmetry(
+                        symprec=self.symprec,
+                        angle_tolerance=self.angle_tolerance,
+                    ).get_symmetry_label(
                         structure
                     )
                 case (unknown, _):

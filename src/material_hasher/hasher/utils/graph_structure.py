@@ -1,4 +1,6 @@
 # Copyright 2025 Entalpic
+import warnings
+
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
 from pymatgen.core import Structure
@@ -39,10 +41,12 @@ def get_structure_graph(
         if primitive_reduction
         else structure.copy()
     )
-    structure_graph = StructureGraph.with_local_env_strategy(
-        structure=assess_structure,
-        strategy=bonding_algorithm(**bonding_kwargs),
-    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", UserWarning)
+        structure_graph = StructureGraph.from_local_env_strategy(
+            structure=assess_structure,
+            strategy=bonding_algorithm(**bonding_kwargs),
+        )
     for n, site in zip(range(len(assess_structure)), assess_structure):
         structure_graph.graph.nodes[n]["specie"] = site.specie.name
     for edge in structure_graph.graph.edges:
