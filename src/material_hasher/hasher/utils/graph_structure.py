@@ -1,5 +1,6 @@
 # Copyright 2025 Entalpic
 import warnings
+import math
 
 from pymatgen.analysis.graphs import StructureGraph
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
@@ -14,8 +15,8 @@ def get_structure_graph(
     bonding_kwargs: dict = {},
     bonding_algorithm: NearNeighbors = EconNN,
     primitive_reduction: bool = False,
-    symprec: float = 0.1,
-    angle_tolerance: float | None = 5,
+    symprec: float = 0.01,
+    rad_angle_tolerance: float = 5 * math.pi / 180,
 ) -> Graph:
     """Method to build networkx graph object based on
     bonding algorithm from Pymatgen Structure
@@ -26,6 +27,17 @@ def get_structure_graph(
             NearNeighbor class. Defaults to {}.
         bonding_algorithm (NearNeighbors, optional): NearNeighbor
             class to build bonded structure. Defaults to EconNN.
+        primitive_reduction (bool, optional): Whether to reduce the
+            structure to its primitive cell before computing the hash.
+            Defaults to False.
+        symprec (float, optional): Distance tolerance in Cartesian 
+            coordinates to find crystal symmetry. May not be supported 
+            for all backends. Defaults  to 0.01, default `symprec` for 
+            pytmatgen's `SpacegroupAnalyzer`.
+        rad_angle_tolerance (float, optional): Tolerance of angle between 
+            basis vectors in degrees to be tolerated in the symmetry 
+            finding. Value in radians. Defaults to 5 degrees ~ 0.087 rad,
+            default `angle_tolerance` for pytmatgen's `SpacegroupAnalyzer`.
 
     Returns:
         Graph: networkx Graph object
@@ -35,7 +47,7 @@ def get_structure_graph(
             MoyoDataset(
                 MoyoAdapter.from_structure(structure),
                 symprec=symprec,
-                angle_tolerance=angle_tolerance,
+                angle_tolerance=rad_angle_tolerance,
             ).prim_std_cell
         )
         if primitive_reduction
