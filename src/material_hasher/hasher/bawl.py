@@ -5,7 +5,7 @@ from pymatgen.core import Structure
 
 from material_hasher.hasher.base import HasherBase
 from material_hasher.hasher.utils.graph import get_weisfeiler_lehman_hash
-from material_hasher.hasher.utils.graph_structure import get_structure_graph
+from material_hasher.hasher.utils.graph_structure import get_primitive_reduction, get_structure_graph
 from material_hasher.hasher.utils.symmetry import (
     AFLOWSymmetry,
     MoyoSymmetry,
@@ -39,11 +39,18 @@ class BAWLHasher(HasherBase):
     shorten_hash (bool, optional): Whether to shorten the hash.
         The shortened hash does not include the symmetry label.
         Defaults to False.
-    symprec (float, optional): Distance tolerance in Cartesian 
-        coordinates to find crystal symmetry. May not be supported 
+    symprec_pr (float, optional): Distance tolerance in Angstroms 
+        to find primitive reduction. Defaults  to 0.25, 
+        default `tolerance` for pytmatgen's `Structure.get_primitive_structure`.
+    angle_tolerance_pr (float, optional): Tolerance of angle between 
+        basis vectors in degrees to be tolerated in primitive reduction. 
+        Value in degrees. Defaults to 5 degrees, default `angle_tolerance`
+        for pytmatgen's `SpacegroupAnalyzer`.
+    symprec_sg (float, optional): Distance tolerance in Angstroms 
+        to find crystal symmetry. May not be supported 
         for all backends. Defaults  to 0.01, default `symprec` for 
         pytmatgen's `SpacegroupAnalyzer`.
-    angle_tolerance (float, optional): Tolerance of angle between 
+    angle_tolerance_sg (float, optional): Tolerance of angle between 
         basis vectors in degrees to be tolerated in the symmetry 
         finding. Value in degrees. May not be supported for all 
         backends. Defaults to 5 degrees, default `angle_tolerance`
@@ -67,8 +74,10 @@ class BAWLHasher(HasherBase):
         symmetry_labeling: str = "moyo",
         primitive_reduction: bool = False,
         shorten_hash: bool = False,
-        symprec: float = 0.01,
-        angle_tolerance: float = 5,
+        symprec_pr: float = 0.25,
+        angle_tolerance_pr: float = 5,
+        symprec_sg: float = 0.01,
+        angle_tolerance_sg: float = 5,
     ) -> None:
         self.graphing_algorithm = graphing_algorithm
         self.bonding_algorithm = bonding_algorithm
@@ -77,17 +86,27 @@ class BAWLHasher(HasherBase):
         self.symmetry_labeling = symmetry_labeling
         self.primitive_reduction = primitive_reduction
         self.shorten_hash = shorten_hash
-        self.symprec = symprec
-        self.angle_tolerance = angle_tolerance
+        self.symprec_pr = symprec_pr
+        self.angle_tolerance_pr = angle_tolerance_pr
+        self.symprec_sg = symprec_sg
+        self.angle_tolerance_sg = angle_tolerance_sg
     
 
     @property
-    def rad_angle_tolerance(self) -> float:
-        """Angle tolerance in radians."""
-        if self.angle_tolerance is None:
+    def rad_angle_tolerance_pr(self) -> float:
+        """Angle tolerance in radians for primitive reduction."""
+        if self.angle_tolerance_pr is None:
             return None
         else:
-            return self.angle_tolerance * math.pi / 180
+            return self.angle_tolerance_pr * math.pi / 180
+    
+    @property
+    def rad_angle_tolerance_sg(self) -> float:
+        """Angle tolerance in radians for symmetry finding."""
+        if self.angle_tolerance_sg is None:
+            return None
+        else:
+            return self.angle_tolerance_sg * math.pi / 180
 
 
     def get_bawl_materials_data(
@@ -114,14 +133,17 @@ class BAWLHasher(HasherBase):
         dict: data dictionary with all hash components
         """
         data = dict()
+        if self.primitive_reduction:
+            structure = get_primitive_reduction(
+                structure,
+                symprec=self.symprec_pr,
+                rad_angle_tolerance=self.rad_angle_tolerance_pr,
+            )
         if self.graphing_algorithm == "WL":
             graph = get_structure_graph(
                 structure,
                 bonding_kwargs=self.bonding_kwargs,
                 bonding_algorithm=self.bonding_algorithm,
-                primitive_reduction=self.primitive_reduction,
-                symprec=self.symprec,
-                rad_angle_tolerance=self.rad_angle_tolerance,
             )
             data["bonding_graph_hash"] = get_weisfeiler_lehman_hash(graph)
         else:
@@ -133,24 +155,24 @@ class BAWLHasher(HasherBase):
                 case (_, label) if label is not None:
                     data["symmetry_label"] = label
                 case ("AFLOW", _):
-                    if self.symprec is not None:
-                        RuntimeWarning(f"{self.symprec=} however, AFLOW does not support it.")
-                    if self.angle_tolerance is not None:
-                        RuntimeWarning(f"{self.angle_tolerance=} however, AFLOW does not support it.")
+                    if self.symprec_sg is not None:
+                        RuntimeWarning(f"{self.symprec_sg=} however, AFLOW does not support it.")
+                    if self.angle_tolerance_sg is not None:
+                        RuntimeWarning(f"{self.angle_tolerance_sg=} however, AFLOW does not support it.")
                     data["symmetry_label"] = AFLOWSymmetry().get_symmetry_label(
                         structure
                     )
                 case ("SPGLib", _):
                     data["symmetry_label"] = SPGLibSymmetry(
-                        symprec=self.symprec,
-                        angle_tolerance=self.angle_tolerance,
+                        symprec=self.symprec_sg,
+                        angle_tolerance=self.angle_tolerance_sg,
                     ).get_symmetry_label(
                         structure
                     )
                 case ("moyo", _):
                     data["symmetry_label"] = MoyoSymmetry(
-                        symprec=self.symprec,
-                        rad_angle_tolerance=self.rad_angle_tolerance,
+                        symprec=self.symprec_sg,
+                        rad_angle_tolerance=self.rad_angle_tolerance_sg,
                     ).get_symmetry_label(
                         structure
                     )
