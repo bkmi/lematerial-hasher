@@ -15,9 +15,9 @@ def get_primitive_reduction(structure: Structure, symprec: float = 0.01, rad_ang
 
     Args:
         structure (Structure): Pymatgen Structure object
-        symprec (float, optional): Distance tolerance in Cartesian 
-            coordinates to find crystal symmetry. Defaults to 0.01,
-            default `symprec` for pytmatgen's `SpacegroupAnalyzer`.
+        symprec_pr (float, optional): Distance tolerance in Angstroms 
+            to find primitive reduction. Defaults  to 0.25, 
+            default `tolerance` for pytmatgen's `Structure.get_primitive_structure`.
         rad_angle_tolerance (float, optional): Tolerance of angle between 
             basis vectors in degrees to be tolerated in the symmetry 
             finding. Value in radians. Defaults to 5 degrees ~ 0.087 rad,
@@ -49,8 +49,8 @@ def get_structure_graph(
             NearNeighbor class. Defaults to {}.
         bonding_algorithm (NearNeighbors, optional): NearNeighbor
             class to build bonded structure. Defaults to EconNN.
-        symprec (float, optional): Distance tolerance in Cartesian 
-            coordinates to find crystal symmetry. May not be supported 
+        symprec (float, optional): Distance tolerance in Angstroms 
+            to find crystal symmetry. May not be supported 
             for all backends. Defaults  to 0.01, default `symprec` for 
             pytmatgen's `SpacegroupAnalyzer`.
         rad_angle_tolerance (float, optional): Tolerance of angle between 

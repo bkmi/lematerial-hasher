@@ -23,9 +23,9 @@ class MoyoSymmetry:
 
     Parameters
     ----------
-    symprec (float, optional): Distance tolerance in Cartesian 
-        coordinates to find crystal symmetry. Defaults to 0.01,
-        default `symprec` for pytmatgen's `SpacegroupAnalyzer`.
+    symprec (float, optional): Distance tolerance in Angstroms to find 
+        crystal symmetry. Defaults to 0.01, default `symprec` for 
+        pytmatgen's `SpacegroupAnalyzer`.
     rad_angle_tolerance (float, optional): Tolerance of angle between 
         basis vectors in degrees to be tolerated in the symmetry 
         finding. Value in radians. Defaults to 5 degrees ~ 0.087 rad,
@@ -87,9 +87,9 @@ class SPGLibSymmetry:
         """Set settings for Pymatgen's symmetry detection
 
         Args:
-            symprec (float, optional): Distance tolerance in Cartesian 
-                coordinates to find crystal symmetry. Defaults to 0.01,
-                default `symprec` for pytmatgen's `SpacegroupAnalyzer`.
+            symprec (float, optional): Distance tolerance in Angstroms to 
+                find crystal symmetry. Defaults to 0.01, default `symprec`
+                for pytmatgen's `SpacegroupAnalyzer`.
             angle_tolerance (float, optional): Tolerance of angle between 
                 basis vectors in degrees to be tolerated in the symmetry 
                 finding. Value in degrees. Defaults to 5 degrees, default 
