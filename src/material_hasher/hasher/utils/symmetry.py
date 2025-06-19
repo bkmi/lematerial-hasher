@@ -27,15 +27,18 @@ class MoyoSymmetry:
         crystal symmetry. Defaults to 0.01, default `symprec` for 
         pytmatgen's `SpacegroupAnalyzer`.
     rad_angle_tolerance (float, optional): Tolerance of angle between 
-        basis vectors in degrees to be tolerated in the symmetry 
-        finding. Value in radians. Defaults to 5 degrees ~ 0.087 rad,
-        default `angle_tolerance` for pytmatgen's `SpacegroupAnalyzer`.
+        basis vectors in radians to be tolerated in the symmetry 
+        finding. Value in radians. Defaults to None, since the internet 
+        suggests not to use this variable: https://github.com/spglib/spglib/issues/567
     setting : str, optional
         Setting. Defaults to None.
     """
 
     def __init__(
-        self, symprec: float = 0.01, rad_angle_tolerance: float = 5 * math.pi / 180, setting: str | None = None
+        self,
+        symprec: float = 0.01,
+        rad_angle_tolerance: float | None = None,
+        setting: str | None = None
     ):
         self.symprec = symprec
         self.rad_angle_tolerance = rad_angle_tolerance
@@ -55,17 +58,12 @@ class MoyoSymmetry:
         """
         try:
             cell = MoyoAdapter.from_structure(structure)
-            # If any of the parameters are provided, we use the custom parameters
-            # Otherwise, we use the default parameters (default behavior)
-            if any([self.symprec, self.rad_angle_tolerance, self.setting]):
-                dataset = moyopy.MoyoDataset(
-                    cell=cell,
-                    symprec=self.symprec,
-                    angle_tolerance=self.rad_angle_tolerance,
-                    setting=self.setting,
-                )
-            else:
-                dataset = moyopy.MoyoDataset(cell=cell)
+            dataset = moyopy.MoyoDataset(
+                cell=cell,
+                symprec=self.symprec,
+                angle_tolerance=self.rad_angle_tolerance,
+                setting=self.setting,
+            )
         except Exception as e:
             logger.warning(
                 f"Error getting symmetry label for structure: {e}, will return None"
@@ -82,7 +80,7 @@ class SPGLibSymmetry:
     def __init__(
         self,
         symprec: float = 0.01,
-        angle_tolerance: float = 5,
+        angle_tolerance: float = -1,
     ) -> None:
         """Set settings for Pymatgen's symmetry detection
 
@@ -92,8 +90,9 @@ class SPGLibSymmetry:
                 for pytmatgen's `SpacegroupAnalyzer`.
             angle_tolerance (float, optional): Tolerance of angle between 
                 basis vectors in degrees to be tolerated in the symmetry 
-                finding. Value in degrees. Defaults to 5 degrees, default 
-                `angle_tolerance` for pytmatgen's `SpacegroupAnalyzer`.
+                finding. Value in degrees. Defaults to -1 degrees, an 
+                automatic algorithm in SPGLib. The internet suggests not 
+                to use this variable: https://github.com/spglib/spglib/issues/567
         """
         self.symprec = symprec
         self.angle_tolerance = angle_tolerance

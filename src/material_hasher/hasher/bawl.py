@@ -1,11 +1,12 @@
 # Copyright 2025 Entalpic
 import math
+from typing import Optional
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
 from pymatgen.core import Structure
 
 from material_hasher.hasher.base import HasherBase
 from material_hasher.hasher.utils.graph import get_weisfeiler_lehman_hash
-from material_hasher.hasher.utils.graph_structure import get_primitive_reduction, get_structure_graph
+from material_hasher.hasher.utils.graph_structure import get_primitive_reduction, get_primitive_reduction_pymatgen, get_structure_graph
 from material_hasher.hasher.utils.symmetry import (
     AFLOWSymmetry,
     MoyoSymmetry,
@@ -33,9 +34,9 @@ class BAWLHasher(HasherBase):
         label. Only AFLOW, SPGLib, or moyo implemented. AFLOW requires
         AFLOW python packages. SPGLib requires SPGLib python packages.
         moyo requires moyo python packages. Defaults to "moyo".
-    primitive_reduction (bool, optional): Whether to reduce the
+    primitive_reduction (str, optional): Whether to reduce the
         structure to its primitive cell before computing the hash.
-        Defaults to False.
+        Defaults to None.
     shorten_hash (bool, optional): Whether to shorten the hash.
         The shortened hash does not include the symmetry label.
         Defaults to False.
@@ -43,9 +44,10 @@ class BAWLHasher(HasherBase):
         to find primitive reduction. Defaults  to 0.25, 
         default `tolerance` for pytmatgen's `Structure.get_primitive_structure`.
     angle_tolerance_pr (float, optional): Tolerance of angle between 
-        basis vectors in degrees to be tolerated in primitive reduction. 
-        Value in degrees. Defaults to 5 degrees, default `angle_tolerance`
-        for pytmatgen's `SpacegroupAnalyzer`.
+        basis vectors in degrees to be tolerated in the symmetry 
+        finding. Value in degrees. Defaults to None, since
+        the internet suggests not to use this variable: 
+        https://github.com/spglib/spglib/issues/567
     symprec_sg (float, optional): Distance tolerance in Angstroms 
         to find crystal symmetry. May not be supported 
         for all backends. Defaults  to 0.01, default `symprec` for 
@@ -53,8 +55,8 @@ class BAWLHasher(HasherBase):
     angle_tolerance_sg (float, optional): Tolerance of angle between 
         basis vectors in degrees to be tolerated in the symmetry 
         finding. Value in degrees. May not be supported for all 
-        backends. Defaults to 5 degrees, default `angle_tolerance`
-        for pytmatgen's `SpacegroupAnalyzer`.
+        backends. Defaults to None, since the internet suggests not 
+        to use this variable: https://github.com/spglib/spglib/issues/567
 
     References
     ----------
@@ -71,13 +73,13 @@ class BAWLHasher(HasherBase):
         bonding_algorithm: NearNeighbors = EconNN,
         bonding_kwargs: dict = {"tol": 0.2, "cutoff": 10, "use_fictive_radius": True},
         include_composition: bool = True,
-        symmetry_labeling: str = "moyo",
-        primitive_reduction: bool = False,
+        symmetry_labeling: str = "SPGLib",
+        primitive_reduction: Optional[Literal["moyo", "pymatgen"]] = None,
         shorten_hash: bool = False,
         symprec_pr: float = 0.25,
-        angle_tolerance_pr: float = 5,
+        angle_tolerance_pr: Optional[float] = None,
         symprec_sg: float = 0.01,
-        angle_tolerance_sg: float = 5,
+        angle_tolerance_sg: Optional[float] = None,
     ) -> None:
         self.graphing_algorithm = graphing_algorithm
         self.bonding_algorithm = bonding_algorithm
@@ -133,11 +135,16 @@ class BAWLHasher(HasherBase):
         dict: data dictionary with all hash components
         """
         data = dict()
-        if self.primitive_reduction:
+        if self.primitive_reduction == "moyo":
             structure = get_primitive_reduction(
                 structure,
                 symprec=self.symprec_pr,
                 rad_angle_tolerance=self.rad_angle_tolerance_pr,
+            )
+        elif self.primitive_reduction == "pymatgen":
+            structure = get_primitive_reduction_pymatgen(
+                structure,
+                symprec=self.symprec_pr,
             )
         if self.graphing_algorithm == "WL":
             graph = get_structure_graph(
@@ -165,7 +172,7 @@ class BAWLHasher(HasherBase):
                 case ("SPGLib", _):
                     data["symmetry_label"] = SPGLibSymmetry(
                         symprec=self.symprec_sg,
-                        angle_tolerance=self.angle_tolerance_sg,
+                        angle_tolerance=-1 if self.angle_tolerance_sg is None else self.angle_tolerance_sg,
                     ).get_symmetry_label(
                         structure
                     )
