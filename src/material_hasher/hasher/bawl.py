@@ -1,6 +1,6 @@
 # Copyright 2025 Entalpic
 import math
-from typing import Optional
+from typing import Optional, Literal
 from pymatgen.analysis.local_env import EconNN, NearNeighbors
 from pymatgen.core import Structure
 
